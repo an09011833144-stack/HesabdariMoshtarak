@@ -1,0 +1,35 @@
+name: Build Fixed APK
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Extract fixed source
+        run: |
+          unzip -o HesabdariMoshtarak_v2_fixed.zip
+          mv HesabdariMoshtarak_v1 project
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Build APK
+        working-directory: project
+        run: |
+          chmod +x gradlew
+          ./gradlew assembleDebug
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: HesabdariMoshtarak-FIXED-APK
+          path: project/app/build/outputs/apk/debug/*.apk
