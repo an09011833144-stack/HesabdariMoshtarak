@@ -1,0 +1,84 @@
+name: Firebase APK Final V9
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Check source ZIP
+        run: |
+          test -f HesabdariMoshtarak_v6_fixed.zip
+          unzip -l HesabdariMoshtarak_v6_fixed.zip
+
+      - name: Extract project correctly
+        run: |
+          rm -rf project extracted
+          mkdir extracted
+
+          unzip -o HesabdariMoshtarak_v6_fixed.zip -d extracted
+
+          test -f extracted/project/settings.gradle.kts
+          test -f extracted/project/build.gradle.kts
+          test -f extracted/project/app/build.gradle.kts
+          test -f extracted/project/app/google-services.json
+          test -f extracted/project/app/src/main/AndroidManifest.xml
+
+          mv extracted/project project
+
+          echo "Project structure:"
+          find project -maxdepth 3 -type f | sort
+
+      - name: Configure AndroidX
+        run: |
+          cat > project/gradle.properties <<'EOF'
+          android.useAndroidX=true
+          android.enableJetifier=true
+          android.suppressUnsupportedCompileSdk=35
+          EOF
+
+      - name: Setup Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Setup Gradle 8.7
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.7'
+
+      - name: Verify project
+        working-directory: project
+        run: |
+          test -f settings.gradle.kts
+          test -f build.gradle.kts
+          test -f app/build.gradle.kts
+          test -f app/google-services.json
+          test -f app/src/main/AndroidManifest.xml
+
+      - name: Verify Firebase
+        working-directory: project
+        run: |
+          grep -q 'com.hesabdari.moshtarak' app/google-services.json
+
+      - name: Build APK
+        working-directory: project
+        run: |
+          gradle assembleDebug --stacktrace
+
+      - name: Verify APK
+        run: |
+          test -f project/app/build/outputs/apk/debug/app-debug.apk
+          ls -lh project/app/build/outputs/apk/debug/app-debug.apk
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: HesabdariMoshtarak-V9-APK
+          path: project/app/build/outputs/apk/debug/app-debug.apk
