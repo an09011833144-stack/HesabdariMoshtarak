@@ -1,0 +1,34 @@
+name: Build Professional V4 APK
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Extract V4 source
+        run: |
+          unzip -o HesabdariMoshtarak_v4_professional.zip
+          mv HesabdariMoshtarak_v1 project
+          chmod +x project/gradlew
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Build APK
+        working-directory: project
+        run: ./gradlew assembleDebug
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: HesabdariMoshtarak-V4-Professional-APK
+          path: project/app/build/outputs/apk/debug/*.apk
