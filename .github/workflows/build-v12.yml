@@ -1,0 +1,52 @@
+name: Hesabdari Moshtarak V12
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Check source ZIP
+        run: |
+          ls -lah
+          test -f HesabdariMoshtarak_v8_professional_sync_ready_FIXED.zip
+
+      - name: Extract
+        run: |
+          rm -rf project
+          mkdir project
+          unzip -o HesabdariMoshtarak_v8_professional_sync_ready_FIXED.zip -d project
+
+      - name: Check project
+        run: |
+          test -f project/settings.gradle.kts
+          test -f project/build.gradle.kts
+          test -f project/app/build.gradle.kts
+          test -f project/app/google-services.json
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.7'
+
+      - name: Build APK
+        working-directory: project
+        run: |
+          gradle assembleDebug --stacktrace
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: HesabdariMoshtarak-V12-APK
+          path: project/app/build/outputs/apk/debug/app-debug.apk
