@@ -1,0 +1,55 @@
+name: Hesabdari Moshtarak V15 Diagnostic APK
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Check source ZIP
+        shell: bash
+        run: |
+          set -e
+          test -s HesabdariMoshtarak_V15_DIAGNOSTIC.zip
+          unzip -t HesabdariMoshtarak_V15_DIAGNOSTIC.zip
+
+      - name: Extract project
+        shell: bash
+        run: |
+          set -e
+          mkdir -p project
+          unzip -o HesabdariMoshtarak_V15_DIAGNOSTIC.zip -d project
+          test -f project/settings.gradle.kts
+          test -f project/app/build.gradle.kts
+          test -f project/app/src/main/AndroidManifest.xml
+          test -f project/app/src/main/java/com/hesabdari/moshtarak/MainActivity.kt
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.7'
+
+      - name: Build APK
+        working-directory: project
+        run: gradle assembleDebug --stacktrace
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: HesabdariMoshtarak-V15-Diagnostic-APK
+          path: project/app/build/outputs/apk/debug/app-debug.apk
+          if-no-files-found: error
